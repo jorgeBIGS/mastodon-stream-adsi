@@ -1,24 +1,20 @@
-# Mastodon usage - counting toots with DuckDB  
+# Mastodon usage - counting toots with DuckDB 
+
+Project obtained from the article "https://betterprogramming.pub/mastodon-usage-counting-toots-with-kafka-duckdb-seaborn-42215c9488ac" and adapted for scholar purposes by Jorge Garcia.
 
 [Mastodon](https://joinmastodon.org/) is a _decentralized_ social networking platform. Mastodon users are members of a _specific_ Mastodon server, and servers are capable of joining other servers to form a global (or at least federated) social network.
-
-I wanted to start exploring Mastodon usage, and perform some exploratory data analysis of user activity, server popularity and language usage. You may want to jump straight to the [data analysis](#data-analysis)
 
 Tools used
 - [Mastodon.py](https://mastodonpy.readthedocs.io/) - Python library for interacting with the Mastodon API
 - [Apache Kafka](https://kafka.apache.org/) - distributed event streaming platform
 - [DuckDB](https://duckdb.org/) - in-process SQL OLAP database and the [HTTPFS DuckDB extension](https://duckdb.org/docs/extensions/httpfs.html) for reading remote/writing remote files of object storage using the S3 API
 - [MinIO](https://min.io/) - S3 compatible server
-- [Seaborn](https://seaborn.pydata.org/) - visualization library 
-
-
-![mastodon architecture](./docs/mastodon_arch.png)
 
 # Data processing
-We will us Kafka as distributed stream processing platform to collect data from multiple instances. To run Kafka, Kafka Connect (with the S3 sink connector) and schema registry (to support AVRO serialisation) and MinIO setup containers with this command
+We will use Kafka as distributed stream processing platform to collect data from multiple instances. To run Kafka, Kafka Connect (with the S3 sink connector) and schema registry (to support AVRO serialisation) and MinIO setup containers with this command
 
 ```console
- docker-compose up -d
+ config/docker/docker-compose up -d
  ```
 
 # Data collection
@@ -35,7 +31,7 @@ Before you can start installing or using packages in your virtual environment yo
 ```console
 source env/bin/activate
 pip install --upgrade pip
-pip install -r requirements.txt
+pip install -r config/requirements.txt
  ```
 
 
@@ -46,7 +42,7 @@ These are the most recent public posts from people on this and other servers of 
 The python `mastodonlisten` application listens for public posts to the specified server, and sends each toot to Kafka. You can run multiple Mastodon listeners, each listening to the activity of different servers
 
 ```console
-python mastodonlisten.py --baseURL https://mastodon.social --enableKafka
+python src/mastodon_stream.py --baseURL https://mastodon.social --enableKafka
 ```
 
 ## Testing producer (optional)
@@ -58,10 +54,10 @@ kafka-avro-console-consumer --bootstrap-server localhost:9092 --topic mastodon-t
 
 
 # Kafka Connect
-To load the Kafka Connect [config](./config/mastodon-sink-s3-minio.json) file run the following
+To load the Kafka Connect [config](./config/docker/minio/mastodon-sink-s3-minio.json) file run the following
 
 ```console
-curl -X PUT -H  "Content-Type:application/json" localhost:8083/connectors/mastodon-sink-s3/config -d '@./config/mastodon-sink-s3-minio.json'
+curl -X PUT -H  "Content-Type:application/json" localhost:8083/connectors/mastodon-sink-s3/config -d '@./config/docker/minio/mastodon-sink-s3-minio.json'
 ```
 
 # Open s3 browser
@@ -70,9 +66,6 @@ Go to the MinIO web browser http://localhost:9001/
 - username `minio`
 - password `minio123`
 
-
-# Data analysis
-Now we have collected a week of Mastodon activity, let's have a look at some data. These steps are detailed in the [notebook](./notebooks/mastodon-analysis.ipynb)
 
 
 ## Query parquet files directly from s3 using DuckDB

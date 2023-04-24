@@ -1,4 +1,4 @@
-# Mastodon usage - counting toots with DuckDB 
+# Mastodon usage
 
 Project obtained from the article "https://betterprogramming.pub/mastodon-usage-counting-toots-with-kafka-duckdb-seaborn-42215c9488ac" and adapted for scholar purposes by Jorge Garcia.
 
@@ -49,7 +49,7 @@ python src/mastodon_stream.py --baseURL https://mastodon.social --enableKafka
 As an optional step, you can check that AVRO messages are being written to kafka
 
 ```console
-kafka-avro-console-consumer --bootstrap-server localhost:9092 --topic mastodon-topic --from-beginning
+python src/kafka/kafka_consumer.py
 ```
 
 
@@ -89,39 +89,6 @@ And you can now query the parquet files directly from s3
 select *
 from read_parquet('s3://mastodon/topics/mastodon-topic/partition=0/*');
 ```
-
-![SQL](./docs/select_from_s3_result.png)
-
-## Daily Mastodon usage
-
-We can query the `mastodon_toot` table directly to see the number of _toots_, _users_ each day by counting and grouping the activity by the day
-
-We can use the [mode](https://duckdb.org/docs/sql/aggregates.html#statistical-aggregates) aggregate function to find the most frequent "bot" and "not-bot" users to find the most active Mastodon users
-
-
-
-## The Mastodon app landscape
-What clients are used to access mastodon instances. We take the query the `mastodon_toot` table, excluding "bots" and load query results into the `mastodon_app_df` Panda dataframe. [Seaborn](https://seaborn.pydata.org/) is a visualization library for statistical graphics  in Python, built on the top of [matplotlib](https://matplotlib.org/). It also works really well with Panda data structures.
-
-![App usage](./docs/app_usage.png)
-
-
-## Time of day Mastodon usage
-Let's see when Mastodon is used throughout the day and night. I want to get a raw hourly cound of _toots_ each hour of each day. We can load the results of this query into the `mastodon_usage_df` dataframe
-
-![hour of day](./docs/hr_of_day_usage.png)
-
-## Language usage
-A wildly inaccurate investigation of language tags
-
-![language usage](./docs/language_usage.png)
-
-## Language density
-A wildly inaccurate investigation of language tags
-
-![language density](./docs/language_density.png)
-
-
 
 # Optional steps
 
